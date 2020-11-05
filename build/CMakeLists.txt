@@ -253,7 +253,7 @@ ExternalProject_Add(libevent
 # Get patched third party repo
 #
 ExternalProject_Add(third-party-repo
-  PREFIX grpc-repo
+  PREFIX third-party-repo
   GIT_REPOSITORY "https://github.com/triton-inference-server/third_party.git"
   GIT_TAG "gluo-build"
   SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/third-party-repo/src/third_party"
@@ -266,6 +266,24 @@ ExternalProject_Add(third-party-repo
 #
 # Build patched libevhtp
 #
+if (WIN32)
+# WIP: CMAKE_PREFIX_PATH is needed to find libevent
+ExternalProject_Add(libevhtp
+  PREFIX libevhtp
+  SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/third-party-repo/src/third_party/libevhtp/libevhtp"
+  DOWNLOAD_COMMAND ""
+  CMAKE_CACHE_ARGS
+    -DEVHTP_DISABLE_REGEX:BOOL=ON
+    -DEVHTP_DISABLE_SSL:BOOL=ON
+    -DEVHTP_TRITON_ENABLE_HTTP_CONTIGUOUS:BOOL=ON
+    -DEVHTP_TRITON_ENABLE_TRACING:BOOL=${TRITON_ENABLE_TRACING}
+    -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
+    -DCMAKE_PREFIX_PATH:PATH=${CMAKE_CURRENT_BINARY_DIR}/libevent/install
+    -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+    -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/libevhtp/install
+  DEPENDS libevent third-party-repo
+)
+else()
 ExternalProject_Add(libevhtp
   PREFIX libevhtp
   SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/third-party-repo/src/third_party/libevhtp/libevhtp"
@@ -281,6 +299,7 @@ ExternalProject_Add(libevhtp
     -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/libevhtp/install
   DEPENDS libevent third-party-repo
 )
+endif()
 
 #
 # Build Prometheus C++ library
